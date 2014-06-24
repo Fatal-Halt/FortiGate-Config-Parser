@@ -1,0 +1,4 @@
+v0.1   :   Initial Release
+----
+v0.1.1 :   Fixed a condition where a search could be too greedy if a keyword was 
+			located in an object name leading to improper matches. 
