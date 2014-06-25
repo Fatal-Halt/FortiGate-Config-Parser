@@ -1,4 +1,11 @@
-v0.1   :   Initial Release
+v0.2   :   Script will now look for a 'config.conf' file, and will parse that.
+		    Removes need to have multiple .txt files. 
+		   Removed the addresses.txt, groups.txt and policy.txt from the sample files folder
+		    as they are now obsolete. 
 ----
 v0.1.1 :   Fixed a condition where a search could be too greedy if a keyword was 
 			located in an object name leading to improper matches. 
+----
+v0.1   :   Initial Release
+----
+
