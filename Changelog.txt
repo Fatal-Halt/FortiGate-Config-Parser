@@ -1,3 +1,7 @@
+v0.2.1 :   Script now parses out the web override section, 'webfilter ftgd-local-rating'.
+            Calls for new file 'Categories.txt' which provides the mapping between categories and number.
+           Added support for IP-Pools in policies.
+----
 v0.2   :   Script will now look for a 'config.conf' file, and will parse that.
 		    Removes need to have multiple .txt files. 
 		   Removed the addresses.txt, groups.txt and policy.txt from the sample files folder
