@@ -1,11 +1,21 @@
 """
-Fortinet Config Parse Tool v0.2
+Fortinet Config Parse Tool v0.2.1
 
 This tool is used to parse a Fortinet Fortigate configuration file into a human readable TSV format.
 
 """
 import os.path
 import re
+
+#Create category ratings dictionary from the static file
+ratings = {}
+ratingFile = open('Categories.txt','r')
+for line in ratingFile:
+    tempLine = line.strip().split('=')
+    if len(tempLine) >1:
+        ratings[tempLine[0]] = tempLine[1]
+ratingFile.close()
+
 
 confFile = open('config.conf','r')
 
@@ -48,6 +58,14 @@ for line in confFile:
         if finalEnd_re.match(line) or configLine_re.match(line):
             continue
         printLine(line,secType)
+    elif secType == "webfilter ftgd-local-cat":
+        if finalEnd_re.match(line) or configLine_re.match(line):
+            continue
+        printLine(line,secType)
+    elif secType == "webfilter ftgd-local-rating":
+        if finalEnd_re.match(line) or configLine_re.match(line):
+            continue
+        printLine(line,secType)
     else:
         continue
 confFile.close()
@@ -75,14 +93,16 @@ group_re = re.compile('set groups (.*?)\n')
 identitybased_re = re.compile('set identity-based (.*?)\n')
 comments_re = re.compile('set comments (".*")')
 sslcipher_re = re.compile('set sslvpn-cipher (.*?)\n')
+ippool_re = re.compile('set ippool (.*?)\n')
+poolname_re = re.compile('set poolname "(.*?)"\n')
 
 if os.path.isfile("firewall policy.txt"):
     file = open('firewall policy.txt', 'r')
     policyfile = open('./policy.tsv', 'w+')
 
     #Print the header row for our TSV file, and initialize the variables used.
-    print ("Rule #\tInterfaces\tSources\tDestinations\tIdentity Based\tServices\tAction\tSchedule\tLog Traffic\tNAT\tUTM-Status\tFSSO\tGroups\tApplicaiton List\tAV Profile\tWebfilter Profile\tIPS Sensor\tProfile Protocol\tDeep Inspection\tSSL-Cipher\tSSL-Portal\tComments",file=policyfile)
-    rule=srcint=dstint=srcaddrStr=dstaddrStr=ident=svcStr=action=schedule=utm=log=groupStr=appList=av=web=ips=ppo=dio=nat=fsso=comment=sslPortal=sslCipher = ''
+    print ("Rule #\tInterfaces\tSources\tDestinations\tIdentity Based\tServices\tAction\tSchedule\tLog Traffic\tNAT\tIP-Pool\tPoolName\tUTM-Status\tFSSO\tGroups\tApplicaiton List\tAV Profile\tWebfilter Profile\tIPS Sensor\tProfile Protocol\tDeep Inspection\tSSL-Cipher\tSSL-Portal\tComments",file=policyfile)
+    rule=srcint=dstint=srcaddrStr=dstaddrStr=ident=svcStr=action=schedule=utm=log=groupStr=appList=av=web=ips=ppo=dio=nat=fsso=comment=sslPortal=sslCipher=ippool=poolname = ''
 
     #Begin looping through each line. We will grouping policies together based on the 'edit' and 'next' keywords - with an exception for identity based policies (which should be 'nested' in the spreadsheet)
     for line in file:
@@ -92,8 +112,8 @@ if os.path.isfile("firewall policy.txt"):
             #Stops an extra line from being printed after identity based sections
             if rule == '':
                     continue
-            print ("%s\t%s:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (rule,srcint,dstint,srcaddrStr,dstaddrStr,ident,svcStr,action,schedule,log,nat,utm,fsso,groupStr,appList,av,web,ips,ppo,dio,sslCipher,sslPortal,comment),file=policyfile)
-            rule=srcint=dstint=srcaddrStr=dstaddrStr=ident=svcStr=action=schedule=utm=log=groupStr=appList=av=web=ips=ppo=dio=nat=fsso=comment=sslPortal=sslCipher = ''
+            print ("%s\t%s:%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (rule,srcint,dstint,srcaddrStr,dstaddrStr,ident,svcStr,action,schedule,log,nat,ippool,poolname,utm,fsso,groupStr,appList,av,web,ips,ppo,dio,sslCipher,sslPortal,comment),file=policyfile)
+            rule=srcint=dstint=srcaddrStr=dstaddrStr=ident=svcStr=action=schedule=utm=log=groupStr=appList=av=web=ips=ppo=dio=nat=fsso=comment=sslPortal=sslCipher=ippool=poolname = ''
             continue
         #Find the policy number being worked on
         newRule = re.search("edit ([0-9]+.*?)\n",line)
@@ -192,6 +212,13 @@ if os.path.isfile("firewall policy.txt"):
         if "set fsso" in line:
             fsso = (fsso_re.findall(line)[0])
             continue
+        if "set ippool" in line:
+            ippool = (ippool_re.findall(line)[0])
+            continue
+        if "set poolname" in line:
+            poolame = (poolname_re.findall(line)[0])
+            print(poolname)
+            continue
     file.close()
     policyfile.close()
     os.remove('firewall policy.txt')
@@ -252,8 +279,8 @@ if os.path.exists("firewall address.txt"):
     addrFile.close()
     os.remove('firewall address.txt')
 
-member_re = re.compile('set member (.*?)\n')
-        
+#Address Groups
+member_re = re.compile('set member (.*?)\n')     
 if os.path.exists("firewall addrgrp.txt"):
     file = open('firewall addrgrp.txt', 'r')
     groupFile = open('./groups.tsv', 'w+')
@@ -271,16 +298,61 @@ if os.path.exists("firewall addrgrp.txt"):
             group = newGroup.group(1)
             continue
         if "set member" in line:
-            tmp = member_re.findall(line)
-            member = tmp[0]
+            member = (member_re.findall(line)[0])
             member = member.replace('"','')
             member = member.replace(' ','\t')
     file.close()
     groupFile.close()
     os.remove('firewall addrgrp.txt')
 
+#Static Routes
 if os.path.exists("router static.txt"):
     """
     Router Parsing
     """
     os.remove("router static.txt")
+
+#Add local categories to ratings dictionary
+catID_re = re.compile('set id (.*?)\n')
+if os.path.exists("webfilter ftgd-local-cat.txt"):
+    file = open("webfilter ftgd-local-cat.txt")
+
+    for line in file:
+        if "next" in line:
+            ratings[ID]= cat
+        newCat = re.search('edit "(.*?)"\n',line)
+        if newCat:
+            cat = newCat.group(1)
+            continue
+        if "set id" in line:
+            ID = (catID_re.findall(line)[0])
+    file.close()
+    os.remove("webfilter ftgd-local-cat.txt")
+
+#Web rating overrides
+ratingID_re = re.compile('set rating (.*?)\n')
+if os.path.exists("webfilter ftgd-local-rating.txt"):
+    file = open("webfilter ftgd-local-rating.txt",'r')
+    ratingFile = open('./ratings.tsv', 'w+')
+
+    print("URL\tOverride Category",file=ratingFile)
+
+    for line in file:
+        if "next" in line:
+            print("%s\t%s" %(url,rating), file=ratingFile)
+        newURL = re.search('edit "(.*?)"\n',line)
+        if newURL:
+            url = newURL.group(1)
+            continue
+        if "set rating" in line:
+            ID = (ratingID_re.findall(line)[0])
+            rating = ratings[ID]
+    file.close()
+    ratingFile.close()
+    os.remove("webfilter ftgd-local-rating.txt")
+
+
+
+
+
+
