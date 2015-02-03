@@ -1,5 +1,7 @@
-Fortinet Config Parse Tool v0.2
+Fortinet Config Parse Tool v0.3
 Python 3.4
+
+*This project is in serious need of a re-write. I'm mostly just using it when I need, so it gets little attention, hopefully someday I can give it the tune up it needs*
 
 This tool is used to parse a Fortinet Fortigate configuration file into a human readable TSV format.
 
