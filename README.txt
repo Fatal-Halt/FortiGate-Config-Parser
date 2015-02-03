@@ -1,4 +1,4 @@
-Fortinet Config Parse Tool v0.3
+Fortinet Config Parse Tool v0.2
 
 This tool is used to parse a Fortinet Fortigate configuration file into a human readable TSV format.
 
