@@ -1,3 +1,5 @@
+v0.3   :   Added support for Interface Based IPSEC VPN Phase 2 profiles.  
+----
 v0.2.1 :   Script now parses out the web override section, 'webfilter ftgd-local-rating'.
             Calls for new file 'Categories.txt' which provides the mapping between categories and number.
            Added support for IP-Pools in policies.

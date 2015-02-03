@@ -1,5 +1,5 @@
 """
-Fortinet Config Parse Tool v0.2.1
+Fortinet Config Parse Tool v0.3
 
 This tool is used to parse a Fortinet Fortigate configuration file into a human readable TSV format.
 
@@ -29,7 +29,7 @@ def printLine(line,secType):
     tempFile.close()
 
 #Read the configuration file, and sort out the appropriate sections.
-#Use defined printing function to seperate sections into their own files.
+#Use defined printing function to separate sections into their own files.
 secType = ''
 for line in confFile:
     if configLine_re.match(line) is not None:
@@ -63,6 +63,10 @@ for line in confFile:
             continue
         printLine(line,secType)
     elif secType == "webfilter ftgd-local-rating":
+        if finalEnd_re.match(line) or configLine_re.match(line):
+            continue
+        printLine(line,secType)
+    elif secType == "vpn ipsec phase2-interface":
         if finalEnd_re.match(line) or configLine_re.match(line):
             continue
         printLine(line,secType)
@@ -124,7 +128,7 @@ if os.path.isfile("firewall policy.txt"):
         
         #Begin checking what key/value this line contains (if not one of the 'processing' keys from above.) If one is found, evaluate it, and stop checking - moving onto the next line in the file. 
         #*******NOTE: SOME PROPERTY TYPES MAY BE MISSING IF I'M NOT AWARE OF THEM*******
-        #Some of these may return multiple values; If so, they are enumerated and compiled into a comma seperated string. 
+        #Some of these may return multiple values; If so, they are enumerated and compiled into a comma separated string. 
         if "set srcintf" in line:
             tmp = srcint_re.findall(line)
             srcint = tmp[0]
@@ -351,7 +355,78 @@ if os.path.exists("webfilter ftgd-local-rating.txt"):
     ratingFile.close()
     os.remove("webfilter ftgd-local-rating.txt")
 
+#IPSec Tunnels
+    
+p1_re = re.compile('set phase1name (.*?)\n')
+srcName_re = re.compile('set src-name (.*?)\n')
+dstName_re = re.compile('set dst-name (.*?)\n')
+encrypt_re = re.compile('set proposal (.*?)\n')
+keylife_re = re.compile('set keylifeseconds (.*?)\n')
+keepalive_re = re.compile('set keepalive (.*?)\n')
+autonego_re = re.compile('set auto-negotiate (.*?)\n')
+pfs_re = re.compile('set pfs (.*?)\n')
+dhgrp_re = re.compile('set dhgrp (.*?)\n')
+replay_re = re.compile('set replay (.*?)\n')
 
+if os.path.exists("vpn ipsec phase2-interface.txt"):
+    file = open('vpn ipsec phase2-interface.txt', 'r')
+    p2File = open('./phase2.tsv', 'w+')
+
+    print ("Phase2\tP1\tSrc Name\tDst Name\tProposal\tKeylife\tKeep Alive?\tAuto-Negotiate?\tPFS?\tDH Group\tReplay Detection",file=p2File)
+    name=p1=srcName=dstName=encrypt=keylife=keepalive=autonego=pfs=dhgrp=replay = ""
+
+    for line in file:
+        if "next" in line:
+            print("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" %(name,p1,srcName,dstName,encrypt,keylife,keepalive,autonego,pfs,dhgrp,replay),file=p2File)
+            name=p1=srcName=dstName=encrypt=keylife=keepalive=autonego=pfs=dhgrp=replay = ""
+            continue
+        newP2 = re.search('edit "(.*?)"\n',line)
+        if newP2:
+            name = newP2.group(1)
+            continue
+        if "set phase1name" in line:
+            tmp = p1_re.findall(line)
+            p1 = tmp[0]
+            continue
+        if "set src-name" in line:
+            tmp = srcName_re.findall(line)
+            srcName = tmp[0]
+            continue
+        if "set dst-name" in line:
+            tmp = dstName_re.findall(line)
+            dstName = tmp[0]
+            continue
+        if "set proposal" in line:
+            tmp = encrypt_re.findall(line)
+            encrypt = tmp[0]
+            continue
+        if "set keylifeseconds" in line:
+            tmp = keylife_re.findall(line)
+            keylife = tmp[0]
+            continue
+        if "set keepalive" in line:
+            tmp = keepalive_re.findall(line)
+            keepalive = tmp[0]
+            continue
+        if "set auto-negotiate" in line:
+            tmp = autonego_re.findall(line)
+            autonego = tmp[0]
+            continue
+        if "set pfs" in line:
+            tmp = pfs_re.findall(line)
+            pfs = tmp[0]
+            continue
+        if "set dhgrp" in line:
+            tmp = dhgrp_re.findall(line)
+            dhgrp = tmp[0]
+            continue
+        if "set replay" in line:
+            tmp = replay_re.findall(line)
+            replay = tmp[0]
+            continue
+    file.close()
+    p2File.close()
+    os.remove('vpn ipsec phase2-interface.txt')
 
 
 
